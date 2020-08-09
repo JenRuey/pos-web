@@ -1,10 +1,10 @@
-import { MaskedTextBoxComponent } from "@syncfusion/ej2-react-inputs";
 import _ from "lodash";
+import moment from "moment";
 import React from "react";
 import { Button, Col, Form, Modal, Row, Table } from "react-bootstrap";
 import { IoIosAddCircle, IoIosRemoveCircle } from "react-icons/io";
 import OrderServices from "../services/OrderServices";
-import { valueFromId } from "../utils/Form";
+import { valueFromId, resetValueById } from "../utils/Form";
 
 export default function WebView() {
   const [data, setData] = React.useState([]);
@@ -16,7 +16,6 @@ export default function WebView() {
   async function start() {
     try {
       let response = await OrderServices.getProduct();
-      console.log(response.data);
       setProduct(response.data);
     } catch (error) {
       console.error(error);
@@ -78,16 +77,34 @@ export default function WebView() {
     }
   };
 
-  const checkout = (e) => {
+  const checkout = async (e) => {
     e.preventDefault();
     let totalPaid = parseFloat(valueFromId("total-paid-amount"));
     let paymentMtd = valueFromId("payment-method");
-    console.log(totalPaid);
-    console.log(paymentMtd);
 
-    let { subtotal, quantity, tax, total, round, grandTotal } = setValue();
+    let { quantity, tax, grandTotal } = setValue();
     if (paidAmount - grandTotal >= 0) {
-      alert("Payment successfully!");
+      try {
+        let dateTime =
+          moment().format("yyyy_MM_DD_") + moment().format("HH:mm:ss.SSS");
+        let body = {
+          referenceNo: dateTime + "-" + paymentMtd + "-" + quantity,
+          tax: tax.toFixed(2),
+          serviceCharge: 0.0,
+          totalAmount: grandTotal.toFixed(2),
+          paymentMethod: paymentMtd,
+          paidAmount: totalPaid.toFixed(2),
+          items: data
+        };
+        await OrderServices.createOrder(body);
+        alert("Payment successfully!");
+        setData([]);
+        setPaidAmount(0);
+        resetValueById("total-paid-amount");
+        resetValueById("payment-method");
+      } catch (error) {
+        console.error(error);
+      }
       handleClose();
     } else {
       alert("Insufficient total paid amount!");
@@ -132,7 +149,7 @@ export default function WebView() {
                 return (
                   <tr key={"table-data-" + index}>
                     <td>{product}</td>
-                    <td>{price}</td>
+                    <td align={"center"}>{price.toFixed(2)}</td>
                     <td
                       className={
                         "d-flex justify-content-between align-items-center"
@@ -142,32 +159,32 @@ export default function WebView() {
                       {quantity}
                       <IoIosAddCircle onClick={() => increment(index, 1)} />
                     </td>
-                    <td>{cost}</td>
+                    <td align={"right"}>{cost.toFixed(2)}</td>
                   </tr>
                 );
               })}
               <tr>
-                <td colspan={3}>SubTotal</td>
+                <td colSpan={3}>SubTotal</td>
                 <td align={"right"}>{subtotal.toFixed(2)}</td>
               </tr>
               <tr>
-                <td colspan={3}>No. of Items</td>
+                <td colSpan={3}>No. of Items</td>
                 <td align={"right"}>{quantity}</td>
               </tr>
               <tr>
-                <td colspan={3}>Tax (6%)</td>
+                <td colSpan={3}>Tax (6%)</td>
                 <td align={"right"}>{tax.toFixed(2)}</td>
               </tr>
               <tr>
-                <td colspan={3}>Total</td>
+                <td colSpan={3}>Total</td>
                 <td align={"right"}>{total.toFixed(2)}</td>
               </tr>
               <tr>
-                <td colspan={3}>Rounding</td>
+                <td colSpan={3}>Rounding</td>
                 <td align={"right"}>{round.toFixed(2)}</td>
               </tr>
               <tr>
-                <td colspan={3}>Grand Total</td>
+                <td colSpan={3}>Grand Total</td>
                 <td align={"right"}>{grandTotal.toFixed(2)}</td>
               </tr>
             </tbody>
@@ -244,7 +261,7 @@ export default function WebView() {
                 </tr>
                 <tr>
                   <td>Total</td>
-                  <td>RM {grandTotal}</td>
+                  <td>RM {grandTotal.toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td>Payment Method</td>

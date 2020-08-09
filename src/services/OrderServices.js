@@ -15,6 +15,15 @@ const OrderServices = {
       method: "GET"
     });
     return response;
+  },
+
+  createOrder: async function (data) {
+    let response = await Axios({
+      url: "http://localhost:8000/store_order",
+      method: "POST",
+      data
+    });
+    return response;
   }
 };
 
