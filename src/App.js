@@ -20,7 +20,7 @@ function App() {
           <Switch>
             <Route path={Path.login} component={Login} />
             <Route path={Path.register} component={Register} />
-
+            {/* Private Routes */}
             <PrivateRoutes path={Path.webView} component={WebView} />
 
             <Route component={Home} />
